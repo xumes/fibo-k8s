@@ -22,3 +22,15 @@ after_success:
   - docker push xumes/fibo-nginx
   - docker push xumes/fibo-server
   - docker push xumes/fibo-worker
+
+deploy:
+  provider: elasticbeanstalk
+  region: "us-east-1"
+  app: "fibo-server"
+  env: "Fiboserver-env"
+  bucket_name: "elasticbeanstalk-us-east-1-296386055060"
+  bucket_path: "docker-fibo"
+  on:
+    branch: main
+  access_key_id: $AWS_ACCESS_KEY
+  secret_access_key: $AWS_SECRET_KEY
