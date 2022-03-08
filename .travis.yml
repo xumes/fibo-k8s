@@ -1,9 +1,28 @@
 sudo: required
 services:
   - docker
+env:
+  global:
+    - SHA=$(git rev-parse --short HEAD)
+    - CLOUDSDK_CORE_DISABLE_PROMPTS=1
 before_install: 
   - curl https://sdk.cloud.google.com | bash > /dev/null;
   - source $HOME/google-cloud-sdk/path.bash.inc
   - gcloud components update kubectl
   - gcloud auth activate-service-account --key-file service-account.json
   - openssl aes-256-cbc -K $encrypted_9f3b5599b056_key -iv $encrypted_9f3b5599b056_iv -in service-account.json.enc -out service-account.json -d
+  #remember to run the next commands on the GCloud environment as well (just for the first time -- project setup)
+  - gcloud config set project fibo-k8s-343514
+  - gcloud config set compute/zone us-central1-c
+  - gcloud container clusters get-credentials fibo-cluster 
+  #done, only those 3 commands on GCloud (remember to also add the secrets into GCloud)
+  - docker login -u $DOCKER_ID -p $DOCKER_PASSWORD
+  - docker build -t xumes/fibo-client-test -f ./client/Dockerfile.dev ./client
+script:
+  - docker run -e CI=true xumes/fibo-client-test npm test
+
+deploy:
+  provider: script
+  script: bash ./deploy.sh
+  on:
+    branch: main
